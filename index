@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroEvalúa - Plataforma para Pequeños Productores</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .header {
+            background: #2e7d32;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            color: white;
+        }
+        .tabs {
+            display: flex;
+            justify-content: center;
+            background: #388e3c;
+            padding: 10px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 12px 25px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .tab.active {
+            background: #1b5e20;
+            color: white;
+        }
+        .content {
+            display: none;
+            padding: 30px 15px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .content.active {
+            display: block;
+        }
+        .hero {
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef');
+            background-size: cover;
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .feature-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 15px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .map-container {
+            height: 400px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .btn-primary {
+            background-color: #2e7d32;
+            border-color: #2e7d32;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-weight: 500;
+        }
+        .btn-primary:hover {
+            background-color: #1b5e20;
+            border-color: #1b5e20;
+        }
+        .user-type-selector {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .user-type {
+            margin: 10px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .user-icon {
+            font-size: 3rem;
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+                align-items: center;
+            }
+            .tab {
+                width: 90%;
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>AgroEvalúa</h1>
+        <p class="lead">Plataforma de evaluación para pequeños productores agrícolas</p>
+    </div>
+    
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('inicio')">Inicio</button>
+        <button class="tab" onclick="showTab('evaluacion')">Evaluación de Tierras</button>
+        <button class="tab" onclick="showTab('mapas')">Mapas Interactivos</button>
+        <button class="tab" onclick="showTab('datos')">Datos Técnicos</button>
+        <button class="tab" onclick="showTab('acerca')">Acerca del Proyecto</button>
+    </div>
+    
+    <div id="inicio" class="content active">
+        <div class="hero">
+            <h2>Herramientas para el desarrollo agrícola</h2>
+            <p class="lead">Facilitamos la evaluación de tierras para pequeños productores, compradores e instituciones financieras</p>
+            <button class="btn btn-primary btn-lg">Regístrate Gratis</button>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <h3>Evaluación Rápida</h3>
+                    <p>Sistema simplificado para valorar propiedades agrícolas con información básica.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <h3>Transparencia</h3>
+                    <p>Datos accesibles para productores, compradores e instituciones financieras.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <h3>Enfoque Local</h3>
+                    <p>Especialmente diseñado para la región de Cuatro Cañadas y áreas similares.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="user-type-selector">
+            <div class="user-type" onclick="showUserGuide('productor')">
+                <div class="user-icon">👨‍🌾</div>
+                <h4>Soy Productor</h4>
+                <p>Evalúa tu tierra y muestra su potencial</p>
+            </div>
+            <div class="user-type" onclick="showUserGuide('comprador')">
+                <div class="user-icon">🏡</div>
+                <h4>Soy Comprador</h4>
+                <p>Encuentra tierras con potencial</p>
+            </div>
+            <div class="user-type" onclick="showUserGuide('banco')">
+                <div class="user-icon">🏦</div>
+                <h4>Institución Financiera</h4>
+                <p>Accede a datos confiables</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="evaluacion" class="content">
+        <h2>Evaluación de Tierras Agrícolas</h2>
+        <p>Nuestro sistema simplificado te permite obtener una valoración aproximada de tu propiedad con solo unos pocos datos:</p>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <form id="evaluation-form">
+                    <div class="mb-3">
+                        <label for="ubicacion" class="form-label">Ubicación (Cuatro Cañadas)</label>
+                        <select class="form-control" id="ubicacion">
+                            <option value="">Seleccione una zona</option>
+                            <option value="norte">Zona Norte</option>
+                            <option value="sur">Zona Sur</option>
+                            <option value="este">Zona Este</option>
+                            <option value="oeste">Zona Oeste</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tamanio" class="form-label">Tamaño (hectáreas)</label>
+                        <input type="number" class="form-control" id="tamanio" min="1" max="100">
+                    </div>
+                    <div class="mb-3">
+                        <label for="tipo-suelo" class="form-label">Tipo de Suelo</label>
+                        <select class="form-control" id="tipo-suelo">
+                            <option value="arcilloso">Arcilloso</option>
+                            <option value="arenoso">Arenoso</option>
+                            <option value="franco">Franco</option>
+                            <option value="limoso">Limoso</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="acceso-agua" class="form-label">Acceso a Agua</label>
+                        <select class="form-control" id="acceso-agua">
+                            <option value="pozo">Pozo propio</option>
+                            <option value="comunitario">Fuente comunitaria</option>
+                            <option value="rio">Cercanía a río</option>
+                            <option value="ninguno">Sin acceso directo</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="calcularValoracion()">Calcular Valoración</button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <div id="resultado-evaluacion" style="display:none;">
+                    <h4>Resultado de la Evaluación</h4>
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <h5 id="valor-estimado" class="card-title"></h5>
+                            <p id="detalles-evaluacion" class="card-text"></p>
+                            <div class="progress mt-3">
+                                <div id="calidad-progreso" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <p class="mt-2"><small id="calidad-texto"></small></p>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-primary mt-3">Guardar Evaluación</button>
+                </div>
+                <div id="instrucciones-evaluacion" class="mt-4">
+                    <h5>¿Cómo funciona?</h5>
+                    <p>Nuestro algoritmo considera factores clave para la región de Cuatro Cañadas:</p>
+                    <ul>
+                        <li>Precios históricos de tierras en la zona</li>
+                        <li>Calidad del suelo y potencial agrícola</li>
+                        <li>Infraestructura disponible</li>
+                        <li>Acceso a recursos hídricos</li>
+                        <li>Datos climáticos regionales</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="mapas" class="content">
+        <h2>Mapas Interactivos de Cuatro Cañadas</h2>
+        <p>Explora las propiedades agrícolas registradas en nuestra plataforma:</p>
+        
+        <div class="map-container" id="map"></div>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <h4>Filtros de Búsqueda</h4>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="filtro-tamanio" class="form-label">Tamaño (hectáreas)</label>
+                            <input type="range" class="form-range" id="filtro-tamanio" min="1" max="100" value="10">
+                            <div class="d-flex justify-content-between">
+                                <small>1 ha</small>
+                                <small id="valor-tamanio">10 ha</small>
+                                <small>100 ha</small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Suelo</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="suelo-arcilloso" checked>
+                                <label class="form-check-label" for="suelo-arcilloso">Arcilloso</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="suelo-arenoso" checked>
+                                <label class="form-check-label" for="suelo-arenoso">Arenoso</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="suelo-franco" checked>
+                                <label class="form-check-label" for="suelo-franco">Franco</label>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary">Aplicar Filtros</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h4>Propiedades Destacadas</h4>
+                <div class="list-group">
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Finca El Porvenir</h5>
+                            <small>15 ha</small>
+                        </div>
+                        <p class="mb-1">Zona Norte, suelo franco, acceso a pozo propio</p>
+                        <small>Valoración: $45,000</small>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Terreno San Miguel</h5>
+                            <small>8 ha</small>
+                        </div>
+                        <p class="mb-1">Zona Este, suelo arcilloso, acceso comunitario</p>
+                        <small>Valoración: $22,000</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="datos" class="content">
+        <h2>Datos Técnicos para Productores</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5>Guías Agrícolas</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">Mejores prácticas para suelos arcillosos</li>
+                            <li class="list-group-item">Cultivos recomendados por temporada</li>
+                            <li class="list-group-item">Manejo eficiente del agua</li>
+                            <li class="list-group-item">Control de plagas regionales</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5>Indicadores Clave</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="indicadoresChart" height="200"></canvas>
+                        <p class="mt-2"><small>Precio promedio por hectárea en Cuatro Cañadas (últimos 12 meses)</small></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <h4 class="mt-4">Calculadoras Útiles</h4>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Rendimiento Esperado</h5>
+                        <div class="mb-3">
+                            <label class="form-label">Cultivo</label>
+                            <select class="form-select">
+                                <option>Soya</option>
+                                <option>Maíz</option>
+                                <option>Trigo</option>
+                                <option>Girasol</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-sm btn-primary">Calcular</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Costo de Insumos</h5>
+                        <div class="mb-3">
+                            <label class="form-label">Área (ha)</label>
+                            <input type="number" class="form-control" value="1" min="1">
+                        </div>
+                        <button class="btn btn-sm btn-primary">Estimar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Rentabilidad</h5>
+                        <div class="mb-3">
+                            <label class="form-label">Precio esperado (por tonelada)</label>
+                            <input type="number" class="form-control">
+                        </div>
+                        <button class="btn btn-sm btn-primary">Proyectar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="acerca" class="content">
+        <div class="row">
+            <div class="col-md-6">
+                <h2>Acerca de AgroEvalúa</h2>
+                <p>AgroEvalúa nace como una iniciativa para apoyar a los pequeños productores agrícolas de Cuatro Cañadas y regiones similares, proporcionando herramientas accesibles para la evaluación de tierras y la toma de decisiones informadas.</p>
+                
+                <h4 class="mt-4">Nuestros Objetivos</h4>
+                <ul>
+                    <li>Democratizar el acceso a herramientas de evaluación de tierras</li>
+                    <li>Promover la transparencia en transacciones agrícolas</li>
+                    <li>Facilitar el acceso a créditos para pequeños productores</li>
+                    <li>Proporcionar datos técnicos relevantes para la región</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Equipo</h5>
+                        <p>Desarrollado en colaboración con:</p>
+                        <ul>
+                            <li>Asociación de Pequeños Productores de Cuatro Cañadas</li>
+                            <li>Facultad de Agronomía - Universidad Autónoma</li>
+                            <li>Cooperativa Agrícola Regional</li>
+                        </ul>
+                        <hr>
+                        <h5>Contacto</h5>
+                        <p>info@agroevalua.org<br>+591 123 4567</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Función para mostrar pestañas
+        function showTab(tabName) {
+            var contents = document.querySelectorAll('.content');
+            var tabs = document.querySelectorAll('.tab');
+            contents.forEach(content => content.classList.remove('active'));
+            tabs.forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
+            
+            // Inicializar mapa cuando se muestra la pestaña
+            if(tabName === 'mapas' && !window.mapInitialized) {
+                initMap();
+                window.mapInitialized = true;
+            }
+        }
+        
+        // Función para guía de usuario
+        function showUserGuide(userType) {
+            alert(`Mostrando guía para ${userType}`);
+            // Aquí podrías redirigir a una sección específica o mostrar un modal
+        }
+        
+        // Función para calcular valoración
+        function calcularValoracion() {
+            const tamanio = parseFloat(document.getElementById('tamanio').value) || 1;
+            const zona = document.getElementById('ubicacion').value;
+            const tipoSuelo = document.getElementById('tipo-suelo').value;
+            const agua = document.getElementById('acceso-agua').value;
+            
+            // Factores base (simplificado para ejemplo)
+            let precioBase = 2000;
+            let factorZona = 1;
+            let factorSuelo = 1;
+            let factorAgua = 1;
+            
+            // Ajustes por zona
+            if(zona === 'norte') factorZona = 1.2;
+            if(zona === 'sur') factorZona = 0.9;
+            if(zona === 'este') factorZona = 1.1;
+            if(zona === 'oeste') factorZona = 1.0;
+            
+            // Ajustes por tipo de suelo
+            if(tipoSuelo === 'arcilloso') factorSuelo = 1.0;
+            if(tipoSuelo === 'arenoso') factorSuelo = 0.8;
+            if(tipoSuelo === 'franco') factorSuelo = 1.3;
+            if(tipoSuelo === 'limoso') factorSuelo = 1.1;
+            
+            // Ajustes por acceso a agua
+            if(agua === 'pozo') factorAgua = 1.4;
+            if(agua === 'comunitario') factorAgua = 1.1;
+            if(agua === 'rio') factorAgua = 1.2;
+            if(agua === 'ninguno') factorAgua = 0.7;
+            
+            // Cálculo final
+            const valorTotal = tamanio * precioBase * factorZona * factorSuelo * factorAgua;
+            const calidad = ((factorZona + factorSuelo + factorAgua) / 3) * 100;
+            
+            // Mostrar resultados
+            document.getElementById('valor-estimado').textContent = `Valor estimado: $${valorTotal.toLocaleString()}`;
+            document.getElementById('detalles-evaluacion').textContent = `Terreno de ${tamanio} ha en Zona ${zona.toUpperCase()}, suelo ${tipoSuelo} con acceso ${agua}.`;
+            document.getElementById('calidad-progreso').style.width = `${calidad}%`;
+            document.getElementById('calidad-texto').textContent = `Calidad de tierra: ${Math.round(calidad)}/100`;
+            document.getElementById('resultado-evaluacion').style.display = 'block';
+        }
+        
+        // Inicializar mapa
+        function initMap() {
+            const map = L.map('map').setView([-16.8, -62.5], 12);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Marcadores de ejemplo
+            L.marker([-16.8, -62.5]).addTo(map)
+                .bindPopup('Finca El Porvenir<br>15 ha<br>Valor: $45,000')
+                .openPopup();
+                
+            L.marker([-16.79, -62.51]).addTo(map)
+                .bindPopup('Terreno San Miguel<br>8 ha<br>Valor: $22,000');
+        }
+        
+        // Controlador para el filtro de tamaño
+        document.getElementById('filtro-tamanio').addEventListener('input', function() {
+            document.getElementById('valor-tamanio').textContent = this.value + ' ha';
+        });
+        
+        // Inicializar gráfico cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gráfico de ejemplo
+            const ctx = document.getElementById('indicadoresChart').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                    datasets: [{
+                        label: 'Precio por ha ($)',
+                        data: [2100, 2150, 2200, 2250, 2300, 2350, 2400, 2450, 2500, 2550, 2600, 2650],
+                        borderColor: '#2e7d32',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
